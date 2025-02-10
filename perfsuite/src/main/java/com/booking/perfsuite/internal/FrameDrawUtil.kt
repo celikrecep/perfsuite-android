@@ -6,6 +6,7 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import androidx.annotation.UiThread
 import androidx.core.view.doOnAttach
+import androidx.core.view.doOnDetach
 import java.lang.ref.WeakReference
 
 /**
@@ -31,10 +32,15 @@ public fun Activity.doOnFirstDraw(action: () -> Unit) {
 @UiThread
 public fun View.doOnNextDraw(action: () -> Unit) {
     if (!viewTreeObserver.isAlive) return
-    doOnAttach {
-        viewTreeObserver.addOnDrawListener(
-            NextDrawListener(this, action)
-        )
+
+    val nextDrawListener = NextDrawListener(this, action)
+
+    doOnAttach { view ->
+        view.viewTreeObserver.addOnDrawListener(nextDrawListener)
+    }
+
+    doOnDetach { view ->
+        view.viewTreeObserver.takeIf { it.isAlive }?.removeOnDrawListener(nextDrawListener)
     }
 }
 
