@@ -6,6 +6,7 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import androidx.annotation.UiThread
 import androidx.core.view.doOnAttach
+import java.lang.ref.WeakReference
 
 /**
  * Performs the given action when the activity very first frame is drawn.
@@ -72,12 +73,12 @@ private fun Window.callbackWrapper(): WindowCallbackWrapper {
 }
 
 private class NextDrawListener(
-    val view: View,
+    view: View,
     val callback: () -> Unit
 ) : ViewTreeObserver.OnDrawListener {
 
     private var isInvoked = false
-    private var viewTreeObserver = view.viewTreeObserver
+    private val viewRef = WeakReference(view)
 
     override fun onDraw() {
         if (isInvoked) return
@@ -85,10 +86,8 @@ private class NextDrawListener(
 
         callback()
 
-        view.post {
-            if (viewTreeObserver.isAlive) {
-                viewTreeObserver.removeOnDrawListener(this)
-            }
+        viewRef.get()?.post {
+            viewRef.get()?.viewTreeObserver?.takeIf { it.isAlive }?.removeOnDrawListener(this)
         }
     }
 }
