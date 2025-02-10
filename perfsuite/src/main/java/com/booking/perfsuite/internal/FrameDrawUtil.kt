@@ -37,10 +37,11 @@ public fun View.doOnNextDraw(action: () -> Unit) {
 
     doOnAttach { view ->
         view.viewTreeObserver.addOnDrawListener(nextDrawListener)
-    }
-
-    doOnDetach { view ->
-        view.viewTreeObserver.takeIf { it.isAlive }?.removeOnDrawListener(nextDrawListener)
+        doOnDetach { detachedView ->
+            detachedView.viewTreeObserver
+                .takeIf { it.isAlive }
+                ?.removeOnDrawListener(nextDrawListener)
+        }
     }
 }
 
